@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# GITHUB PAGES DEPLOYS
 
-# Run and deploy your AI Studio app
+Este projeto está configurado para o GitHub Pages.
 
-This contains everything you need to run your app locally.
+## Como corrigir a "Tela Branca" no GitHub Pages:
 
-View your app in AI Studio: https://ai.studio/apps/03335ef4-ffe5-4d57-8118-3b2240762142
+A tela branca acontece porque o GitHub Pages serve o site em uma subpasta (como `/effective-bassoon/`). 
 
-## Run Locally
+### O que eu fiz para você:
+1. **Configuração de Caminho Relativo:** Atualizei o arquivo `vite.config.ts` com `base: './'`. Isso garante que o site encontre os arquivos de estilo e script em qualquer pasta.
+2. **Automação de Deploy:** Criei um arquivo em `.github/workflows/deploy.yml`. 
 
-**Prerequisites:**  Node.js
+### Como ativar o deploy automático:
+1. Suba todos os arquivos para o seu repositório no GitHub.
+2. Vá em **Settings** (Configurações) do seu repositório no GitHub.
+3. Clique em **Pages** na lateral esquerda.
+4. Em **Build and deployment** > **Source**, mude para **GitHub Actions**.
+5. Agora, toda vez que você enviar código novo, o GitHub vai construir e publicar o site sozinho!
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Desenvolvimento Local
+
+```bash
+npm install
+npm run dev
+```
+
+## Gerar Versão para Produção (Manual)
+
+```bash
+npm run build
+```
+O resultado estará na pasta `dist`. Você deve subir o **conteúdo** da pasta `dist` para o diretório raiz do seu repositório ou branch de deploy.
