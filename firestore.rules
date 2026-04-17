@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: members
+    // Document ID: auto-generated
+    // Fields:
+    //   - fullName: string (required, < 100 chars)
+    //   - birthDate: string (required, ISO 8601)
+    //   - phone: string (required)
+    //   - address: string (optional)
+    //   - neighborhood: string (optional)
+    //   - maritalStatus: string (enum)
+    //   - position: string (enum)
+    //   - congregation: string (enum: Sede, Jardim Caíc)
+    //   - status: string (enum: Ativo, Desligado)
+    //   - createdAt: timestamp (required)
+    //   - createdBy: string (required, UID)
+    //
+    // ===============================================================
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "projetomembros8@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidMember(data) {
+      let isPublic = data.createdBy == 'public_registration';
+      let isAuth = request.auth != null && data.createdBy == request.auth.uid;
+      
+      return (isPublic || isAuth) &&
+             data.keys().hasAll(['fullName', 'birthDate', 'phone', 'maritalStatus', 'position', 'congregation', 'status', 'createdAt', 'createdBy', 'city']) &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 25 &&
+             data.city is string && data.city.size() <= 100 &&
+             data.congregation in ['Sede', 'Jardim Caíc'] &&
+             data.status in ['Ativo', 'Desligado'] &&
+             data.maritalStatus in ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)'] &&
+             data.position in ['Membro (a)', 'Auxiliar', 'Diácono', 'Presbítero', 'Evangelista'] &&
+             data.createdAt is timestamp;
+    }
+
+    // Members collection
+    match /members/{memberId} {
+      allow read: if isAuthenticated();
+      
+      // Allow anyone to create as long as it's valid (public form support)
+      allow create: if isValidMember(request.resource.data);
+      
+      allow update: if isAuthenticated() && isValidMember(request.resource.data) && 
+                    request.resource.data.createdAt == resource.data.createdAt &&
+                    request.resource.data.createdBy == resource.data.createdBy;
+                    
+      allow delete: if isAdmin();
+    }
+
+    // Users collection (private profile)
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
